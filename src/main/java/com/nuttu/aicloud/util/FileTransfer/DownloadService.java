@@ -12,6 +12,7 @@ public class DownloadService {
 
         if (!file.exists()) {
             System.out.println(name + "文件不存在");
+            System.out.println(file);
         }
         response.setContentType("application/force-download");
         response.addHeader("Content-Disposition", "attachment;fileName=" + name);

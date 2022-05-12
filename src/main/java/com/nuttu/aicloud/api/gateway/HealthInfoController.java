@@ -264,8 +264,8 @@ public class HealthInfoController {
     }
 
     @ApiOperation(value = "下载升级包")
-    @RequestMapping(value = "healthInfos/download/{name}")
-    public void fileDownload(@PathVariable String name, HttpServletResponse response){
+    @GetMapping(value = "healthInfos/download")
+    public void fileDownload(@RequestParam(value="name") String name, HttpServletResponse response){
         try {
             new DownloadService().logDownload(name,response);
         } catch (Exception e) {
