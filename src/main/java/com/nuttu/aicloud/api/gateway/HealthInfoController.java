@@ -42,22 +42,27 @@ public class HealthInfoController {
     private DeviceConfigRepository deviceConfigRepository;
     @Autowired
     UserService userService;
-    @ApiOperation(value = "Gets HealthCodes' information", response = Page.class)
+
+    @ApiOperation(value = "Gets HealthCodes' simple information", response = Page.class)
     @RequestMapping(value="/healthInfos", method= RequestMethod.GET)
     public PageResponse getHealthInfoList(
             @ApiParam(value = "" ) @RequestParam(value = "owner"  ,  required = false) String owner,
-            @ApiParam(value = "") @RequestParam(value = "page", defaultValue = "1", required = false) Integer page,
-            @ApiParam(value = "between 1 to 1000") @RequestParam(value = "size", defaultValue = "00", required = false) Integer size,
+            @ApiParam(value = "" ) @RequestParam(value = "sn"  ,defaultValue = "%%",  required = false) String sn,
+            @ApiParam(value = "" ) @RequestParam(value = "code_color"  ,defaultValue = "%%",  required = false) String code_color,
+            @ApiParam(value = "" ) @RequestParam(value = "type"  ,defaultValue = "%%",  required = false) String type,
+            @ApiParam(value = "") @RequestParam(value = "page", defaultValue = "0", required = false) Integer page,
+            @ApiParam(value = "between 1 to 1000") @RequestParam(value = "size", defaultValue = "20", required = false) Integer size,
             @ApiParam(value = "") @RequestParam(value = "sortType", defaultValue = "DESC", required = false) String sortType,
             @ApiParam(value = "") @RequestParam(value = "sortFields", defaultValue = "updatedAt", required = false) String sortFields
-            ) {
+    ) {
         Sort sort = "DESC".equals(sortType)?new Sort(Sort.Direction.DESC,sortFields):new Sort(Sort.Direction.ASC,sortFields);
         Pageable pageable = new PageRequest(page,size, sort);
         PageResponse resp = new PageResponse();
         String loggedInUserId = userService.getLoggedInUserId();
-//        System.out.println(loggedInUserId);
-        Page<HealthInfo> r;
+        Page<HealthIndoModel> r;
 
+        if(!sn.equals("%%")) sn = "%"+sn+"%";
+        if(!type.equals("%%")) type = "%"+type+"%";
 //        System.out.println(pageable);
         if(Objects.equals(loggedInUserId, "")){
             resp.setStatus(400);
@@ -68,21 +73,51 @@ public class HealthInfoController {
 //                System.out.println(owner);
 //                System.out.println(sort);
                 if(owner==null||owner.length()==0){
-//                    System.out.println("return all infos");
-                    r = healthInfoRepository.findAll(pageable);
+                    System.out.println("return all infos");
+                    if(sn!="%%"||code_color!="%%"||type!="%%"){
+                        r = healthInfoRepository.findPartByParams("%%",sn,code_color,type,pageable);
+                    }else{
+                        r = healthInfoRepository.findAllPart(pageable);
+                    }
                 }else{
                     System.out.println("根据表单信息查询");
-                    r = healthInfoRepository.findByOwner(owner,pageable);
+                    r = healthInfoRepository.findPartByParams(owner,sn,code_color,type,pageable);
                 }
             }else{
                 System.out.println("权限不足根据登陆用户查询");
-                r = healthInfoRepository.findByOwner(user.getEmail(), pageable);
+                if(sn!="%%"||code_color!="%%"||type!="%%"){
+                    r = healthInfoRepository.findPartByParams(user.getEmail(),sn,code_color,type,pageable);
+                }else{
+                    r = healthInfoRepository.findPartByOwner(user.getEmail(), pageable);
+                }
             }
             resp.setPageStats(r,true);
         }
         return resp;
     }
+    //
 
+
+    @ApiOperation(value = "Gets HealthCodes' simple information", response = OperationResponse.class)
+    @RequestMapping(value="/healthInfos/{uuid}", method= RequestMethod.GET)
+    public OperationResponse getHealthInfoByUuid(@PathVariable String uuid){
+        OperationResponse resp = new OperationResponse();
+        if(uuid!=null){
+            HealthIndoModel oneByUuid = healthInfoRepository.findOneByUuid(uuid).orElse(null);
+            if(oneByUuid!=null){
+                resp.setStatus(200);
+                resp.setMessage("成功得到健康码信息");
+                resp.setData(oneByUuid);
+            }else{
+                resp.setStatus(415);
+                resp.setMessage("未找到相关信息");
+            }
+        }else{
+            resp.setStatus(410);
+            resp.setMessage("请求信息错误");
+        }
+        return resp;
+    }
     @ApiOperation(value = "Add new health infomation",response = OperationResponse.class)
     @RequestMapping(value = "/healthInfos",method = RequestMethod.POST)
     public OperationResponse postHealthInfo(@RequestBody HealthInfo healthInfo, HttpServletRequest req){
@@ -111,7 +146,7 @@ public class HealthInfoController {
         OperationResponse resp = new OperationResponse();
 
         if(this.healthInfoRepository.exists(uuid)){
-            HealthInfo r = healthInfoRepository.findOneByUuid(uuid).orElse(null);
+            HealthIndoModel r = healthInfoRepository.findOneByUuid(uuid).orElse(null);
             this.healthInfoRepository.delete(uuid);
             resp.setStatus(200);
             resp.setMessage("Record Deleted");
@@ -128,7 +163,7 @@ public class HealthInfoController {
     @RequestMapping(value="/healthInfos/{uuid}",method=RequestMethod.PUT)
     public OperationResponse putHealthInfo(@PathVariable String uuid,@RequestBody HealthInfo healthInfo){
         OperationResponse resp = new OperationResponse();
-        HealthInfo hi = null;
+        HealthIndoModel hi = null;
         if(uuid!=null){
             hi = healthInfoRepository.findOneByUuid(uuid).orElse(null);
         }
@@ -167,6 +202,8 @@ public class HealthInfoController {
                         }else{
                             deviceConfigRequest.setNew_version(config.getVersion());
                             deviceConfigRequest.setUpg_url(config.getUpg_path());
+//                            gateway.get().setVersion(config.getVersion());
+//                            gatewayRepository.save(gateway.get());
                         }
                     }
                     if(config.getBoardConfig()==1){
@@ -194,14 +231,20 @@ public class HealthInfoController {
         Gateway gw = gatewayRepository.findOneByMac(sn).orElse(null);
         if(gw!=null){
             resp.setStatus(200);
+            DeviceConfig deviceConfig =  deviceConfigRepository.findOneById(1).orElse(null);
             if(updateMsgAck.getCode()==21){
                 DeviceConfigRequest deviceConfigRequest = new DeviceConfigRequest();
-                DeviceConfig deviceConfig =  deviceConfigRepository.findOneById(1).orElse(null);
                 if(deviceConfig!=null){
                     deviceConfigRequest.setTransaction(sn.hashCode());
                     deviceConfigRequest.setNew_version(deviceConfig.getVersion());
                     deviceConfigRequest.setUpg_url(deviceConfig.getUpg_path());
                     resp.setData(deviceConfigRequest);
+                }
+            }else if(updateMsgAck.getCode()==6){
+                if (deviceConfig != null) {
+                    gw.setVersion(deviceConfig.getVersion());
+                    gatewayRepository.save(gw);
+                    resp.setMessage("收到消息，设备信息已更新");
                 }
             }
         }else{

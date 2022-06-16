@@ -45,4 +45,5 @@ public class HealthInfo implements Serializable {
 
     public HealthInfo(){
     }
+
 }
