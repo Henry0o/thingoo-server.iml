@@ -11,6 +11,7 @@ import com.nuttu.aicloud.repository.GatewayRepository;
 import com.nuttu.aicloud.repository.HealthInfoRepository;
 import com.nuttu.aicloud.util.FileTransfer.DownloadService;
 import com.nuttu.aicloud.util.FileTransfer.UploadService;
+import com.nuttu.aicloud.util.FileTransfer.DeleteService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -187,6 +188,7 @@ public class HealthInfoController {
     public OperationResponse postReport(@RequestBody HealthInfoStatus healthInfoStatus){
         OperationResponse resp = new OperationResponse();
         Optional<Gateway> gateway = gatewayRepository.findOneByMac(healthInfoStatus.getSn());
+
         if(gateway.isPresent()){
             resp.setStatus(200);
             resp.setMessage("成功接收消息");
@@ -314,6 +316,20 @@ public class HealthInfoController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @ApiOperation(value = "删除文件")
+    @RequestMapping(value = "/healthInfos/delete",method=RequestMethod.POST)
+    public OperationResponse fileDelete(@RequestParam(value="name") String fileName){
+        OperationResponse resp = new OperationResponse();
+        if(new DeleteService().Delete(fileName)){
+            resp.setStatus(200);
+            resp.setMessage("成功删除文件:"+fileName);
+        }else{
+            resp.setStatus(404);
+            resp.setMessage("删除文件失败:"+fileName);
+        }
+        return resp;
     }
 
 

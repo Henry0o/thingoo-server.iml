@@ -9,4 +9,6 @@ import java.util.Optional;
 
 public interface DeviceConfigRepository extends JpaRepository<DeviceConfig, String> {
     Optional<DeviceConfig> findOneById(@Param("id") Integer id);
+    Optional<DeviceConfig> findOneByOwner(@Param("owner") String owner);
+
 }
