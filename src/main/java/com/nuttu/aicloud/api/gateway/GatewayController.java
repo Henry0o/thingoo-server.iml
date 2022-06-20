@@ -282,7 +282,7 @@ public class GatewayController {
     @RequestMapping(value= "/gateways/getQrCode",method=RequestMethod.GET)
     public OperationResponse getQrCode(@RequestParam String context) {
         OperationResponse resp = new OperationResponse();
-        BufferedImage bufferedImage =  QRCodeUtil.createQrCodeImage(context,466,466);
+        BufferedImage bufferedImage =  QRCodeUtil.createQrCodeImage(context,300,300);
         String base64IMG = QRCodeUtil.BufferedImageToBase64(bufferedImage);
         if(base64IMG!=""){
             resp.setStatus(200);

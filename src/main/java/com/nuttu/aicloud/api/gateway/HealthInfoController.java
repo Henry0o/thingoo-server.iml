@@ -260,22 +260,32 @@ public class HealthInfoController {
     @ApiOperation(value = "获取配置信息",response = OperationResponse.class)
     @RequestMapping(value = "/healthInfos/config",method = RequestMethod.GET)
     public  OperationResponse getConfig(
-            @ApiParam(value = "id" ) @RequestParam(value="id",required = false) Integer id,
-            @ApiParam(value = "") @RequestParam(value = "page", defaultValue = "1", required = false) Integer page,
-            @ApiParam(value = "between 1 to 1000") @RequestParam(value = "size", defaultValue = "20", required = false) Integer size,
-            @ApiParam(value = "") @RequestParam(value = "sort", defaultValue = "updatedAt", required = false) String sort,
-            Pageable pageable
+//            @ApiParam(value = "id" ) @RequestParam(value="owner",required = false) String owner
+
     ){
         OperationResponse resp = new OperationResponse();
         DeviceConfig r;
-        id = 1;
-        r  = deviceConfigRepository.findOneById(id).orElse(null);
-        if(r!=null){
+        String owner;
+        String loggedInUserId = userService.getLoggedInUserId();
+        owner = userService.getUserByUuid(loggedInUserId).getEmail();
+
+        System.out.println(owner);
+        r = deviceConfigRepository.findOneByOwner(owner).orElseGet(() -> new DeviceConfig());
+        if(!Objects.equals(r.getOwner(), "")){
+            System.out.println("有记录");
             resp.setStatus(200);
             resp.setData(r);
         }else{
-            resp.setStatus(404);
-            resp.setMessage("No Record Exist");
+            r.setOwner(owner);
+            DeviceConfig f = deviceConfigRepository.save(r);
+            System.out.println(f);
+            if(f!=null){
+                resp.setStatus(200);
+                resp.setData(f);
+            }else{
+                resp.setStatus(404);
+                resp.setMessage("No Record Exist");
+            }
         }
         return resp;
 
@@ -286,9 +296,11 @@ public class HealthInfoController {
     public OperationResponse postConfig(@RequestBody DeviceConfig deviceConfig){
         OperationResponse resp = new OperationResponse();
         DeviceConfig dc = null;
-        dc = deviceConfigRepository.findOneById(1).orElse(null);
-        if(dc != null){
-            deviceConfig.setId(1);
+        String loggedInUserId = userService.getLoggedInUserId();
+        String owner = userService.getUserByUuid(loggedInUserId).getEmail();
+
+        dc = deviceConfigRepository.findOneByOwner(owner).orElse(null);
+        if(dc != null) {
             DeviceConfig r = this.deviceConfigRepository.save(deviceConfig);
             resp.setStatus(200);
             resp.setMessage("Record Update");

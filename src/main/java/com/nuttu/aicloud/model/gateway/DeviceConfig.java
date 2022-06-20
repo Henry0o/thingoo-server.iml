@@ -1,5 +1,6 @@
 package com.nuttu.aicloud.model.gateway;
 
+import com.nuttu.aicloud.model.user.Role;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,5 +30,20 @@ public class DeviceConfig {
     @Temporal(TemporalType.TIMESTAMP)
     @Getter @Setter private Date createdAt;
 
+    public DeviceConfig(){
+        this.owner = "";
+        this.version = "";
+        this.boardUpdate = 0;
+        this.config = "~0366H0000;0369H0000.";
+        this.upg_path = "";
+        this.boardConfig = 0;
+    }
+    public DeviceConfig(String owner){
+        this.owner = owner;
+        this.version = "";
+        this.boardConfig = 0;
+        this.config = "~0366H0000;0369H0000.";
+        this.boardUpdate = 0;
+    }
 
 }
