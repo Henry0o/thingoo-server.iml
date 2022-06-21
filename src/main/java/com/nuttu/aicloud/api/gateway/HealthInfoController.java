@@ -192,14 +192,15 @@ public class HealthInfoController {
         if(gateway.isPresent()){
             resp.setStatus(200);
             resp.setMessage("成功接收消息");
-            Optional<DeviceConfig> deviceConfig = deviceConfigRepository.findOneById(1);
+            User u =  userService.getUserByUuid(gateway.get().getUserId());
+            Optional<DeviceConfig> deviceConfig = deviceConfigRepository.findOneByOwner(u.getEmail());
             if(deviceConfig.isPresent()){
                 DeviceConfig config = deviceConfig.get();
                 if(config.getBoardUpdate()==1||config.getBoardConfig()==1){
                     DeviceConfigRequest deviceConfigRequest = new DeviceConfigRequest();
                     deviceConfigRequest.setTransaction(healthInfoStatus.getSn().hashCode());
                     if(config.getBoardUpdate()==1){
-                        if(Objects.equals(config.getVersion(), gateway.get().getVersion())){
+                        if(Objects.equals(config.getVersion(), healthInfoStatus.getVersion())){
                             resp.setMessage("成功接收消息，设备已是最新版本");
                         }else{
                             deviceConfigRequest.setNew_version(config.getVersion());
@@ -233,7 +234,9 @@ public class HealthInfoController {
         Gateway gw = gatewayRepository.findOneByMac(sn).orElse(null);
         if(gw!=null){
             resp.setStatus(200);
-            DeviceConfig deviceConfig =  deviceConfigRepository.findOneById(1).orElse(null);
+            String owner = userService.getUserByUuid(gw.getUserId()).getEmail();
+
+            DeviceConfig deviceConfig =  deviceConfigRepository.findOneByOwner(owner).orElse(null);
             if(updateMsgAck.getCode()==21){
                 DeviceConfigRequest deviceConfigRequest = new DeviceConfigRequest();
                 if(deviceConfig!=null){
