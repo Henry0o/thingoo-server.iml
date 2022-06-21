@@ -201,10 +201,13 @@ public class HealthInfoController {
                     deviceConfigRequest.setTransaction(healthInfoStatus.getSn().hashCode());
                     if(config.getBoardUpdate()==1){
                         if(Objects.equals(config.getVersion(), healthInfoStatus.getVersion())){
+                            System.out.println("成功接收消息，设备已是最新版本"+healthInfoStatus.getSn());
                             resp.setMessage("成功接收消息，设备已是最新版本");
                         }else{
                             deviceConfigRequest.setNew_version(config.getVersion());
                             deviceConfigRequest.setUpg_url(config.getUpg_path());
+                            System.out.println("成功接收消息，设备非最新版本，准备升级"+healthInfoStatus.getSn()+"/n"+deviceConfigRequest);
+
 //                            gateway.get().setVersion(config.getVersion());
 //                            gatewayRepository.save(gateway.get());
                         }
