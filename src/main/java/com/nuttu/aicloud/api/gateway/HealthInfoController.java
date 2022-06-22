@@ -1,6 +1,7 @@
 package com.nuttu.aicloud.api.gateway;
 
 import com.nuttu.aicloud.api.user.UserService;
+import com.nuttu.aicloud.config.CorsFilter;
 import com.nuttu.aicloud.model.gateway.*;
 import com.nuttu.aicloud.model.response.OperationResponse;
 import com.nuttu.aicloud.model.response.PageResponse;
@@ -25,9 +26,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.net.URLEncoder;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * @author wing
  */
@@ -35,6 +40,7 @@ import java.util.Optional;
 @Api(tags = {"HealthInfo"})
 public class HealthInfoController {
 
+    protected static final Logger LOG = LoggerFactory.getLogger(HealthInfoController.class);
     @Autowired
     private HealthInfoRepository healthInfoRepository;
     @Autowired
@@ -329,9 +335,44 @@ public class HealthInfoController {
     @ApiOperation(value = "下载升级包")
     @GetMapping(value = "healthInfos/download")
     public void fileDownload(@RequestParam(value="name") String name, HttpServletResponse response){
+        File file = new File("Update_package" + File.separator + name);
+        LOG.info("开始下载文件"+name+"消息头:"+response.getHeaderNames().toString());
+        if (!file.exists()) {
+            System.out.println(name + "文件不存在");
+            System.out.println(file);
+            return ;
+        }
+        LOG.info("文件存在"+name);
+        // 清空response
+//        response.reset();
+        // 设置response的Header
+        response.setCharacterEncoding("UTF-8");
+        //Content-Disposition的作用：告知浏览器以何种方式显示响应返回的文件，用浏览器打开还是以附件的形式下载到本地保存
+        //attachment表示以附件方式下载   inline表示在线打开   "Content-Disposition: inline; filename=文件名.mp3"
+        // filename表示文件的默认名称，因为网络传输只支持URL编码的相关支付，因此需要将文件名URL编码后进行传输,前端收到后需要反编码才能获取到真正的名称
         try {
-            new DownloadService().logDownload(name,response);
-        } catch (Exception e) {
+            response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(name, "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        // 告知浏览器文件的大小
+        response.addHeader("Content-Length", "" + file.length());
+        response.setContentType("application/octet-stream");
+
+        LOG.info("文件Head设置完毕"+name+response.getContentType()+"大小"+response.getHeader("Content-Length"));
+
+        try(FileInputStream fileInputStream = new FileInputStream(file);
+            InputStream fis = new BufferedInputStream(fileInputStream);){
+            byte[] buffer = new byte[fis.available()];
+            fis.read(buffer);
+            fis.close();
+            LOG.info("开始下载文件"+name+"大小"+response.getHeader("Content-Length"));
+            OutputStream outputStream = new BufferedOutputStream(response.getOutputStream());
+
+            outputStream.write(buffer);
+            outputStream.flush();
+        }catch (Exception e) {
+
             e.printStackTrace();
         }
     }

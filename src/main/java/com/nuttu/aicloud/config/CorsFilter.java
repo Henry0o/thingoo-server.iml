@@ -38,9 +38,9 @@ public class CorsFilter implements Filter {
         }
         LOG.debug("Origin: " + reqOrigin +"; Access-Control-Allow-Origin: " + res.getHeader("Access-Control-Allow-Origin"));
 
-        res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS");
+        res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS, HEAD");
 //        res.setHeader("Access-Control-Max-Age", "3600");
-        res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Accept-Encoding, Accept-Language, Host, Referer, Connection, User-Agent, authorization, sw-useragent, sw-version");
+        res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Accept-Encoding, Accept-Language, Host, Referer, Connection, User-Agent, authorization, sw-useragent, sw-version, Content-Length");
 //        res.setHeader("X-XSS-Protection", "0");
 
         // Just REPLY OK if request method is OPTIONS for CORS (pre-flight)

@@ -60,6 +60,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST,"/healthInfos/reportack").permitAll()
                 .antMatchers(HttpMethod.GET,"/healthInfos/download/*").permitAll()
                 .antMatchers(HttpMethod.GET,"/healthInfos/download").permitAll()
+                .antMatchers(HttpMethod.HEAD,"/healthInfos/download/*").permitAll()
+                .antMatchers(HttpMethod.HEAD,"/healthInfos/download").permitAll()
 //                .antMatchers(HttpMethod.GET,"/mqtt/**").permitAll()
 //                .antMatchers(HttpMethod.POST,"/mqtt/**").permitAll()
         .anyRequest().authenticated()

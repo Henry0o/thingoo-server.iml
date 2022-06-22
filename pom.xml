@@ -224,6 +224,12 @@
 			<artifactId>javase</artifactId>
 			<version>3.4.0</version>
 		</dependency>
+		<dependency>
+		<groupId>com.intellij</groupId>
+		<artifactId>annotations</artifactId>
+		<version>5.1</version>
+	</dependency>
+
     </dependencies>
 
 	<build>
